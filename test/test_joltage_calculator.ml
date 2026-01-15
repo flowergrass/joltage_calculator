@@ -6,7 +6,7 @@ module Joltage_calculator = Hardcaml_demo_project.Joltage_calculator
 module Harness = Cyclesim_harness.Make (Joltage_calculator.I) (Joltage_calculator.O)
 
 let ( <--. ) = Bits.( <--. )
-let sample_input_values = "123\n456\n"
+let sample_input_values = "12345\n98765\n"
 
 let simple_testbench (sim : Harness.Sim.t) =
   let inputs = Cyclesim.inputs sim in

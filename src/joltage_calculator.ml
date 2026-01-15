@@ -12,7 +12,7 @@ let out_bits = 64
 let counter_bits = 8
 let digit_bits = 4
 let batteries = 2
-let joltage_bits = digit_bits * batteries
+let vector_bits = digit_bits * batteries
 
 (* Every hardcaml module should have an I and an O record, which define the module
    interface. *)
@@ -55,8 +55,9 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
   (* let%hw[_var] is a shorthand that automatically applies a name to the signal, which
      will show up in waveforms. The [_var] version is used when working with the Always
      DSL. *)
-  let%hw_var joltage = Variable.reg spec ~width:joltage_bits in
   let%hw_var counter = Variable.reg spec ~width:counter_bits in
+  let%hw_var digit_vector = Variable.reg spec ~width:vector_bits in
+  let%hw_var running_sum = Variable.reg spec ~width:out_bits in
   (* We don't need to name the range here since it's immediately used in the module
      output, which is automatically named when instantiating with [hierarchical] *)
   let total_joltage = Variable.wire ~default:(zero out_bits) () in
@@ -64,20 +65,22 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
   compile
     [ sm.switch
         [ ( Idle
-          , [ when_ start [ joltage <--. 0; counter <--. 0; sm.set_next Accepting_inputs ]
+          , [ when_ start [ counter <--. 0; digit_vector <--. 0; running_sum <--. 0; sm.set_next Accepting_inputs ]
             ] )
         ; ( Accepting_inputs
           , [ when_
                 data_in_valid
                 [ if_
                     (data_in ==: of_char '\n')
-                    [ counter <--. 0 ]
+                    [ digit_vector <--. 0
+                    ; counter <--. 0 ]
                     [ if_
                         (counter.value <: of_unsigned_int ~width:counter_bits batteries)
-                        [ joltage
-                          <-- sll joltage.value ~by:digit_bits
-                              +: (zero (digit_bits * (batteries - 1))
-                                  @: data_in.:[digit_bits - 1, 0])
+                        [ digit_vector
+                          <-- sll digit_vector.value ~by:digit_bits
+                              +: (zero (vector_bits - digit_bits)
+                                  @: (data_in -: of_char '0').:[digit_bits - 1, 0])
+                        ; running_sum <-- running_sum.value +: ((zero (out_bits - vector_bits)) @: digit_vector.value)
                         ; counter <-- counter.value +:. 1
                         ]
                         []
@@ -86,11 +89,11 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
             ; when_ finish [ sm.set_next Done ]
             ] )
         ; ( Done
-          , [ total_joltage
-              <-- zero (out_bits - (digit_bits * batteries)) @: joltage.value
+          , [ total_joltage <-- running_sum.value
             ; total_joltage_valid <-- vdd
             ; when_ finish [ sm.set_next Accepting_inputs ]
-            ] )
+            ]
+          )
         ]
     ];
   (* [.value] is used to get the underlying Signal.t from a Variable.t in the Always DSL. *)
