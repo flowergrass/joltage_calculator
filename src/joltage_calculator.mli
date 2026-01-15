@@ -4,7 +4,8 @@
 open! Core
 open! Hardcaml
 
-val num_bits : int
+val in_bits : int
+val out_bits : int
 
 (*_ The module interface exports the same I/O records. Note that the widths don't need to
     be specified in the interface. *)
@@ -21,7 +22,7 @@ module I : sig
 end
 
 module O : sig
-  type 'a t = { range : 'a With_valid.t } [@@deriving hardcaml]
+  type 'a t = { total_joltage : 'a With_valid.t } [@@deriving hardcaml]
 end
 
 val hierarchical : Scope.t -> Signal.t I.t -> Signal.t O.t
