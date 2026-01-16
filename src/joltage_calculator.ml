@@ -75,16 +75,12 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                 data_in_valid
                 [ if_
                     (data_in ==: of_char '\n')
-                    [ proc
-                        [
-                          let x = List.fold2_exn
-                                        (split_lsb ~part_width:digit_bits digit_vector.value)
-                                        (List.init batteries ~f:(pow 10))
-                                        ~init:running_sum.value
-                                        ~f:(fun acc x i -> acc +: (x *: of_unsigned_int ~width:(out_bits - digit_bits) i))
-                          in
-                          running_sum <-- x
-                        ]
+                    [ running_sum
+                      <-- List.fold2_exn
+                            (split_lsb ~part_width:digit_bits digit_vector.value)
+                            (List.init batteries ~f:(pow 10))
+                            ~init:running_sum.value
+                            ~f:(fun acc x i -> acc +: (x *: of_unsigned_int ~width:(out_bits - digit_bits) i))
                       ; digit_vector <--. 0
                       ; counter <--. 0
                     ]
