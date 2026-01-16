@@ -1,4 +1,5 @@
 open! Core
+open! Core_unix
 open! Hardcaml
 open! Hardcaml_waveterm
 open! Hardcaml_test_harness
@@ -7,11 +8,7 @@ module Harness = Cyclesim_harness.Make (Joltage_calculator.I) (Joltage_calculato
 
 let ( <--. ) = Bits.( <--. )
 
-let sample_input_values = "987654321111111\n
-811111111111119\n
-234234234234278\n
-818181911112111\n"
-(* let sample_input_values = In_channel.read_all (Core_unix.getcwd() ^ "../test/sample") *)
+let sample_input_values = In_channel.read_all (Core_unix.getcwd() ^ "/../../../../../test/input")
 
 let simple_testbench (sim : Harness.Sim.t) =
   let inputs = Cyclesim.inputs sim in
