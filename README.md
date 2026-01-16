@@ -17,7 +17,21 @@ I was hoping to have multiple input streams since it is absolutely possible calc
 the solution for multiple lines in parallel but this will have to do for now.
 Apologies for the sloppy code this is my first experience with rtl, ocaml and hardcaml!
 
+Run with:
+
+```
+opam switch 5.2.0+ox
+
+eval $(opam env)
+
+opam install -y hardcaml hardcaml_test_harness hardcaml_waveterm ppx_hardcaml
+
+opam install -y core core_unix ppx_jane rope re dune
+
+dune build bin/generate.exe @runtest
+```
+
 This project was built on top of the range finder template at
 https://github.com/janestreet/hardcaml_template_project/tree/with-extensions
 
-...idk how this license stuff works so I'll just leave it all there
+...idk how this license stuff works so I'll just leave it all there. Probably should've forked?
