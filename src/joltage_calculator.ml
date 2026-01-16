@@ -1,14 +1,8 @@
 (* Advent of Code 2025 Problem 3 Solver.
 
-   This can handle a flexible number of battery_count until overflow issues are hit.
-
-   Only 4 bit registers are required to store each battery digit and
-   calculations are complete within a single clock cycle. This is made possible
-   by using a greedy approach in maintaining only the best batteries seen and popping
-   the first inferior battery from left to right.
-   
    Takes ASCII input through data_in. Only tallies and starts a new count at new line chars.
-   Currently using 64 bit unsigned integer output. Certainly vulnerable to overflow. 
+   Currently using 64 bit unsigned integer output.
+   Alter battery_count to solve variations of the problem.
    
    This project was built on top of the range finder template at
    https://github.com/janestreet/hardcaml_template_project/tree/with-extensions *)
