@@ -44,6 +44,9 @@ module States = struct
   [@@deriving sexp_of, compare ~localize, enumerate]
 end
 
+let rec pow x y =
+  if y = 0 then 1 else x * pow x (y - 1)
+
 let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.t) : _ O.t
   =
   let spec = Reg_spec.create ~clock ~clear () in
@@ -72,12 +75,18 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                 data_in_valid
                 [ if_
                     (data_in ==: of_char '\n')
-                    [ running_sum
-                      <-- running_sum.value
-                        +: uextend ~width:out_bits (digit_vector.value.:[7, 4] *: of_unsigned_int ~width:4 10)
-                        +: uextend ~width:out_bits digit_vector.value.:[3, 0]
-                    ; digit_vector <--. 0
-                    ; counter <--. 0
+                    [ proc
+                        [
+                          let x = List.fold2_exn
+                                        (split_lsb ~part_width:digit_bits digit_vector.value)
+                                        (List.init batteries ~f:(pow 10))
+                                        ~init:running_sum.value
+                                        ~f:(fun acc x i -> acc +: (x *: of_unsigned_int ~width:(out_bits - digit_bits) i))
+                          in
+                          running_sum <-- x
+                        ]
+                      ; digit_vector <--. 0
+                      ; counter <--. 0
                     ]
                     [ let data_in_digit = (data_in -: of_char '0').:[digit_bits - 1, 0] in
                       if_
