@@ -44,12 +44,12 @@ let simple_testbench (sim : Harness.Sim.t) =
   cycle ~n:2 ()
 ;;
 
-(* let waves_config = Waves_config.no_waves *)
+let waves_config = Waves_config.no_waves
 
-let waves_config =
+(* let waves_config =
   Waves_config.to_directory "/tmp/"
   |> Waves_config.as_wavefile_format ~format:Hardcamlwaveform
-;;
+;; *)
 
 (* let waves_config = *)
 (*   Waves_config.to_directory "/tmp/" *)
@@ -62,10 +62,7 @@ let%expect_test "Simple test, optionally saving waveforms to disk" =
     ~create:Joltage_calculator.hierarchical
     simple_testbench;
   [%expect
-    {|
-    (Result (total_joltage 175053592950232))
-    Saved waves to /tmp/test_joltage_calculator_ml_Simple_test__optionally_saving_waveforms_to_disk.hardcamlwaveform
-    |}]
+    {| (Result (total_joltage 175053592950232)) |}]
 ;;
 
 let%expect_test "Simple test with printing waveforms directly" =
