@@ -23,5 +23,5 @@ let joltage_calculator_rtl_command =
 
 let () =
   Command_unix.run
-    (Command.group ~summary:"" [ "joltage_calculator", joltage_calculator_rtl_command ])
+    (Command.group ~summary:"" [ "joltage-calculator", joltage_calculator_rtl_command ])
 ;;
