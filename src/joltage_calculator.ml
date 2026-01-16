@@ -74,30 +74,28 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                     (data_in ==: of_char '\n')
                     [ running_sum
                       <-- running_sum.value
-                        +: ((zero (out_bits - digit_bits - digit_bits)) @: (digit_vector.value.:[7, 4] *: of_unsigned_int ~width:4 10))
-                        +: ((zero (out_bits - digit_bits)) @: digit_vector.value.:[3, 0])
+                        +: uextend ~width:out_bits (digit_vector.value.:[7, 4] *: of_unsigned_int ~width:4 10)
+                        +: uextend ~width:out_bits digit_vector.value.:[3, 0]
                     ; digit_vector <--. 0
                     ; counter <--. 0
                     ]
-                    [ if_
+                    [ let data_in_digit = (data_in -: of_char '0').:[digit_bits - 1, 0] in
+                      if_
                         (counter.value <: of_unsigned_int ~width:counter_bits batteries)
                         [ digit_vector
-                          <-- sll digit_vector.value ~by:digit_bits
-                              +: (zero (vector_bits - digit_bits)
-                                  @: (data_in -: of_char '0').:[digit_bits - 1, 0])
+                          <-- sll digit_vector.value ~by:digit_bits +: uextend ~width:vector_bits data_in_digit
                         ; counter <-- counter.value +:. 1
                         ]
                         [ if_
                             (digit_vector.value.:[7, 4] <: digit_vector.value.:[3, 0])
                             [ digit_vector
                               <-- sll digit_vector.value ~by:digit_bits
-                                  +: (zero (vector_bits - digit_bits)
-                                      @: (data_in -: of_char '0').:[digit_bits - 1, 0])
+                                  +: uextend ~width:vector_bits data_in_digit
                             ]
                             [ when_
-                                (digit_vector.value.:[3, 0] <: (data_in -: of_char '0').:[digit_bits - 1, 0])
+                                (digit_vector.value.:[3, 0] <: data_in_digit)
                                 [ digit_vector
-                                  <-- digit_vector.value.:[7, 4] @: (data_in -: of_char '0').:[digit_bits - 1, 0]
+                                  <-- digit_vector.value.:[7, 4] @: data_in_digit
                                 ]
                             ]
                         ]
