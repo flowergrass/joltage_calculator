@@ -13,7 +13,6 @@ open! Signal
 
 let in_bits = 8
 let out_bits = 64
-let counter_bits = 8 (* Only needs to count up to the number of battery_count *)
 let digit_bits = 4 (* Half the register use of holding ASCII chars *)
 let battery_count = 12 (* PARAMETER: change this to 2 for a part 1 solution! *)
 let digit_vector_bits = digit_bits * battery_count
@@ -56,7 +55,6 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
   let sm =
     State_machine.create (module States) spec
   in
-  let%hw_var counter = Variable.reg spec ~width:counter_bits in
   let%hw_var digit_vector = Variable.reg spec ~width:digit_vector_bits in
   let%hw_var running_sum = Variable.reg spec ~width:out_bits in
   let total_joltage = Variable.wire ~default:(zero out_bits) () in
@@ -66,8 +64,8 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
         [ ( Idle
           , [ when_
                 start
-                [ counter <--. 0
-                ; digit_vector <--. 0
+                (* Populate empty digit vector with ones for convenient data checking *)
+                [ digit_vector <-- ones digit_vector_bits
                 ; running_sum <--. 0
                 ; sm.set_next Accepting_inputs
                 ]
@@ -87,8 +85,7 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                             ~f:(fun acc x i ->
                                   acc +: (x *: of_unsigned_int ~width:(out_bits - digit_bits) i))
 
-                      ; digit_vector <--. 0
-                      ; counter <--. 0
+                      ; digit_vector <-- ones digit_vector_bits
                     ]
                       (* Reduce ASCII char input to 4 bit unsigned int *)
                     [ let data_in_digit = (data_in -: of_char '0').:[digit_bits - 1, 0] in
@@ -98,10 +95,8 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                             +: uextend ~width:digit_vector_bits data_in_digit in
                       if_
                         (* Populate the digit vector pushing from the right until it is full *)
-                        (counter.value <: of_unsigned_int ~width:counter_bits battery_count)
-                        [ digit_vector <-- pushed_vector
-                        ; counter <-- counter.value +:. 1
-                        ]
+                        (sel_top ~width:digit_bits digit_vector.value ==: ones digit_bits)
+                        [ digit_vector <-- pushed_vector ]
                         (* When the vector is full perform the greedy pop *)
                         [ proc
                           (* Calculate the bit above where we want to pop a digit *)
