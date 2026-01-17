@@ -9,7 +9,9 @@ by simply changing the `battery_count` constant in `joltage_calculator.ml`.
 Only 4 bits are required to store each battery digit in a register vector and 
 calculations are complete within a single clock cycle. This is made possible 
 by using a greedy algorithmic approach in storing only the best batteries 
-seen and popping the first inferior battery from left to right.
+seen and popping the first inferior battery from left to right. Thus the
+design scales through infinite streams of input data while instantly maintaining 
+the solution for each line.
 
 Input is fed through as ASCII chars into `data_in`. The program tallies the total and starts a new 
 "joltage" count at new line char inputs. Output is a 64 bit unsigned integer in `total_joltage`.
