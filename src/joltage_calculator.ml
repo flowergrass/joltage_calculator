@@ -55,15 +55,18 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
   let sm =
     State_machine.create (module States) spec
   in
+
   let%hw_var digit_vector = Variable.reg spec ~width:digit_vector_bits in
   let%hw_var running_sum = Variable.reg spec ~width:out_bits in
   let total_joltage = Variable.wire ~default:(zero out_bits) () in
   let total_joltage_valid = Variable.wire ~default:gnd () in
+
   compile
     [ sm.switch
         [ ( Idle
           , [ when_
                 start
+
                 (* Populate empty digit vector with ones for convenient data checking *)
                 [ digit_vector <-- ones digit_vector_bits
                 ; running_sum <--. 0
@@ -76,6 +79,7 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                 [ if_
                     (* Tally digit vector before clearing on new line input *)
                     (data_in ==: of_char '\n')
+
                     (* This fold converts the digit vector into a binary integer *)
                     [ running_sum
                       <-- List.fold2_exn
@@ -89,6 +93,7 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                     ]
                       (* Reduce ASCII char input to 4 bit unsigned int *)
                     [ let data_in_digit = (data_in -: of_char '0').:[digit_bits - 1, 0] in
+
                       (* Copy of the digit vector with the new char pushed in from the right *)
                       let pushed_vector = 
                             sll digit_vector.value ~by:digit_bits
@@ -97,6 +102,7 @@ let create scope ({ clock; clear; start; finish; data_in; data_in_valid } : _ I.
                         (* Populate the digit vector pushing from the right until it is full *)
                         (sel_top ~width:digit_bits digit_vector.value ==: ones digit_bits)
                         [ digit_vector <-- pushed_vector ]
+                        
                         (* When the vector is full perform the greedy pop *)
                         [ proc
                           (* Calculate the bit above where we want to pop a digit *)
